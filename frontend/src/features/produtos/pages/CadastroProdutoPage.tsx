@@ -1,10 +1,10 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MensagemErro } from '../../../components/Feedback'
 import { lerNumero } from '../../../lib/format'
 import { produtosApi } from '../api'
 import { EXEMPLOS } from '../exemplos'
-import type { NovoProduto } from '../types'
+import type { NoArvore, NovoProduto } from '../types'
 
 type Linha = {
   chave: number
@@ -61,11 +61,37 @@ function validar(linhas: Linha[]): string | null {
   return null
 }
 
+function linhasDaArvore(raiz: NoArvore): Linha[] {
+  const linhas: Linha[] = []
+  const visitar = (no: NoArvore, pai: string | null) => {
+    linhas.push(novaLinha({
+      nome: no.nome,
+      pai: pai ?? '',
+      quantidade: String(no.quantidade),
+      valor: String(no.valorUnitario),
+    }))
+    no.filhos.forEach((filho) => visitar(filho, no.nome))
+  }
+  visitar(raiz, null)
+  return linhas
+}
+
 export function CadastroProdutoPage() {
   const navigate = useNavigate()
+  const produtoId = Number(useParams().id)
+  const editando = Number.isInteger(produtoId) && produtoId > 0
   const [linhas, setLinhas] = useState<Linha[]>(() => [novaLinha()])
   const [erro, setErro] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
+  const [carregando, setCarregando] = useState(editando)
+
+  useEffect(() => {
+    if (!editando) return
+    produtosApi.buscarExplosao(produtoId)
+      .then((arvore) => setLinhas(linhasDaArvore(arvore)))
+      .catch((err: Error) => setErro(err.message))
+      .finally(() => setCarregando(false))
+  }, [editando, produtoId])
 
   function atualizar(chave: number, campo: Campo, valor: string) {
     setLinhas((anteriores) => {
@@ -117,8 +143,10 @@ export function CadastroProdutoPage() {
     setErro(null)
     setSalvando(true)
     try {
-      const criado = await produtosApi.criarProduto(produto)
-      navigate(`/produtos/${criado.id}`)
+      const salvo = editando
+        ? await produtosApi.atualizarProduto(produtoId, produto)
+        : await produtosApi.criarProduto(produto)
+      navigate(`/produtos/${salvo.id}`)
     } catch (err) {
       setErro((err as Error).message)
       setSalvando(false)
@@ -132,19 +160,21 @@ export function CadastroProdutoPage() {
       </Link>
 
       <div className="cabecalho-pagina">
-        <h1>Cadastrar fórmula</h1>
-        <div className="linha-form">
-          {EXEMPLOS.map((exemplo) => (
-            <button
-              key={exemplo.nome}
-              type="button"
-              className="botao botao-secundario"
-              onClick={() => carregarExemplo(exemplo)}
-            >
-              Exemplo: {exemplo.nome}
-            </button>
-          ))}
-        </div>
+        <h1>{editando ? 'Editar fórmula' : 'Cadastrar fórmula'}</h1>
+        {!editando && (
+          <div className="linha-form">
+            {EXEMPLOS.map((exemplo) => (
+              <button
+                key={exemplo.nome}
+                type="button"
+                className="botao botao-secundario"
+                onClick={() => carregarExemplo(exemplo)}
+              >
+                Exemplo: {exemplo.nome}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <p className="descricao">
@@ -153,6 +183,9 @@ export function CadastroProdutoPage() {
         precisa ter nome único.
       </p>
 
+      {carregando ? (
+        <p className="feedback">Carregando fórmula...</p>
+      ) : (
       <form onSubmit={salvar}>
         <table className="tabela formulario">
           <thead>
@@ -251,10 +284,11 @@ export function CadastroProdutoPage() {
 
         <div className="rodape-form">
           <button type="submit" className="botao" disabled={salvando}>
-            {salvando ? 'Salvando...' : 'Salvar produto'}
+            {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Salvar produto'}
           </button>
         </div>
       </form>
+      )}
     </>
   )
 }

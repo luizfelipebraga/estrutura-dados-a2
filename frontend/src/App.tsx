@@ -1,4 +1,4 @@
-import { Link, NavLink, Route, Routes } from 'react-router'
+import { Link, NavLink, Route, Routes } from 'react-router-dom'
 import { USANDO_MOCK } from './features/produtos/api'
 import { CadastroProdutoPage } from './features/produtos/pages/CadastroProdutoPage'
 import { ListaProdutosPage } from './features/produtos/pages/ListaProdutosPage'
@@ -12,22 +12,31 @@ function App() {
           <Link to="/" className="marca">
             Fórmulas de Produto
           </Link>
+
           <nav className="menu">
             <NavLink to="/" end>
               Produtos
             </NavLink>
-            <NavLink to="/produtos/novo">Novo produto</NavLink>
+
+            <NavLink to="/produtos/novo">
+              Novo produto
+            </NavLink>
           </nav>
-          {USANDO_MOCK && <span className="etiqueta etiqueta-aviso">Dados mockados</span>}
         </div>
       </header>
+
+      {USANDO_MOCK && (
+        <div className="aviso-mock">
+          Aplicação executando com dados de demonstração.
+        </div>
+      )}
 
       <main className="conteudo">
         <Routes>
           <Route path="/" element={<ListaProdutosPage />} />
           <Route path="/produtos/novo" element={<CadastroProdutoPage />} />
+          <Route path="/produtos/:id/editar" element={<CadastroProdutoPage />} />
           <Route path="/produtos/:id" element={<ProdutoDetalhePage />} />
-          <Route path="*" element={<p className="feedback">Página não encontrada.</p>} />
         </Routes>
       </main>
     </>

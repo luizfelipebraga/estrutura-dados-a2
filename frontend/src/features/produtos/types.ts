@@ -54,6 +54,8 @@ export type ResultadoImplosao = {
 export type ProdutosApi = {
   listarProdutos(): Promise<ProdutoResumo[]>
   criarProduto(produto: NovoProduto): Promise<ProdutoResumo>
+  atualizarProduto(produtoId: number, produto: NovoProduto): Promise<ProdutoResumo>
+  excluirProduto(produtoId: number): Promise<void>
   buscarExplosao(produtoId: number): Promise<NoArvore>
   calcularNecessidade(produtoId: number, quantidade: number): Promise<Necessidade>
   atualizarValorItem(produtoId: number, itemId: number, valor: number): Promise<NoArvore>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams } from 'react-router-dom'
 import { Carregando, MensagemErro } from '../../../components/Feedback'
 import { formatarMoeda } from '../../../lib/format'
 import { useRequest } from '../../../lib/useRequest'

@@ -124,6 +124,25 @@ export const mockProdutosApi: ProdutosApi = {
     return resumir(novo)
   },
 
+  async atualizarProduto(produtoId, produto) {
+    await esperar()
+    const banco = carregar()
+    const existente = buscarProduto(banco, produtoId)
+    const novosItens = converterItens(banco, produto)
+    existente.nome = produto.nome.trim()
+    existente.itens = novosItens
+    salvar(banco)
+    return resumir(existente)
+  },
+
+  async excluirProduto(produtoId) {
+    await esperar()
+    const banco = carregar()
+    buscarProduto(banco, produtoId)
+    banco.produtos = banco.produtos.filter((produto) => produto.id !== produtoId)
+    salvar(banco)
+  },
+
   async buscarExplosao(produtoId) {
     await esperar()
     return explodir(buildTree(buscarProduto(carregar(), produtoId).itens))
