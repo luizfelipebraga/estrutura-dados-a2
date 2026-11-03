@@ -185,6 +185,35 @@ As tabelas **não** são criadas pelo Hibernate. Elas são criadas por scripts S
 - **Nunca altere uma migration que já rodou.** Para mudar algo, crie uma nova (`V3__...`).
 - Se precisar recomeçar o banco do zero: `docker compose down -v && docker compose up -d --build`.
 
+## Banco na nuvem (Neon)
+
+O banco de produção fica no [Neon](https://neon.com) (projeto `purple-tooth-74852100`, branch `production`). O backend detecta sozinho as variáveis do Neon:
+
+| Variável | Uso |
+|---|---|
+| `DATABASE_URL` | Conexão **pooled** (host com `-pooler`), usada pela aplicação |
+| `DATABASE_URL_UNPOOLED` | Conexão **direta**, usada pelo Flyway nas migrations |
+
+Quando `DATABASE_URL` existe, ela tem prioridade sobre `DB_URL` / `DB_USERNAME` / `DB_PASSWORD`. A conversão do formato do Neon (`postgresql://usuario:senha@host/banco`) para JDBC fica em `backend/.../config/NeonDatabaseUrlEnvironmentPostProcessor.java`. O Docker Compose não repassa essas variáveis ao container, então `docker compose up` continua usando o Postgres local.
+
+Para obter as variáveis (é preciso ter acesso ao projeto no Neon):
+
+```bash
+npm i -g neon
+neon login
+neon env pull        # grava DATABASE_URL e DATABASE_URL_UNPOOLED no .env da raiz
+```
+
+Para rodar o backend local apontando para o Neon:
+
+```bash
+cd backend
+set -a; . ../.env; set +a
+./mvnw spring-boot:run
+```
+
+Em produção (Render, por exemplo), cadastre `DATABASE_URL` e `DATABASE_URL_UNPOOLED` nas variáveis de ambiente do serviço. O Flyway cria as tabelas quando o backend inicia.
+
 ## Estrutura de pastas
 
 ```

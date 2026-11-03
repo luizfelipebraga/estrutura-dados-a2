@@ -1,0 +1,2 @@
+org.springframework.boot.EnvironmentPostProcessor=\
+com.a2.backend.config.NeonDatabaseUrlEnvironmentPostProcessor
